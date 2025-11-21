@@ -1,3 +1,5 @@
+cargo-features = ["trim-paths", "panic-immediate-abort"]
+
 [package]
 name = "rsl"
 version = "0.1.0"
@@ -64,3 +66,5 @@ codegen-units = 1
 strip = true
 debug = false
 split-debuginfo = "off"
+panic = "immediate-abort"
+trim-paths = "all"

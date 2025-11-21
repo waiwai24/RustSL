@@ -68,7 +68,7 @@ RSL/
 ### 环境要求
 
 - **Python 3.7+**
-- **Rust 1.70+** (建议使用 rustup 安装)
+- **Rust Nightly** (需配合 rustup 使用)
 - **PyQt5**
 - **Cargo** (Rust 包管理器)
 
@@ -82,15 +82,30 @@ pip install PyQt5 pycryptodome
 - `PyQt5` - 图形界面框架
 - `pycryptodome` - 加密库（ChaCha20, AES-GCM, RC4 等）
 
-#### Rust 安装
-```bash
-# Windows
-# 访问 https://rustup.rs/ 下载安装
+#### Rust 环境配置
 
-# 验证安装
-cargo --version
-rustc --version
-```
+本项目依赖 Rust Nightly 版本及 `build-std` 特性以优化体积和去除特征。
+
+1. **安装 Rustup**
+   - Windows: 下载并运行 [rustup-init.exe](https://win.rustup.rs/)
+
+2. **配置 Nightly 工具链**
+   项目根目录已包含 `rust-toolchain.toml`，进入目录后 Rustup 会自动检测。你需要手动安装 Nightly 工具链及源码组件：
+   ```bash
+   # 安装 nightly 工具链
+   rustup install nightly
+
+   # 安装 rust-src 组件（用于 build-std 重新编译标准库）
+   rustup component add rust-src --toolchain nightly
+   
+   # 添加 Windows MSVC 目标（通常默认已安装）
+   rustup target add x86_64-pc-windows-msvc --toolchain nightly
+   ```
+
+3. **验证环境**
+   ```bash
+   cargo +nightly --version
+   ```
 
 ### 使用方法
 

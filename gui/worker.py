@@ -144,7 +144,7 @@ class WorkerThread(QThread):
         """复制输出文件"""
         self.log_signal.emit('复制输出...')
         
-        src_file = os.path.join('target', 'release', 'rsl.exe')
+        src_file = os.path.join('target', 'x86_64-pc-windows-msvc' ,'release', 'rsl.exe')
         out_dir = 'output'
         
         if not os.path.exists(out_dir):
