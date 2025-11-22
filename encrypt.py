@@ -1,24 +1,12 @@
 
 import os
 import base64
-import hashlib
 import argparse
-import uuid
-from Crypto.Cipher import ChaCha20, AES
-from Crypto.Util.Padding import pad
+import importlib.util
+import sys
+from pathlib import Path
 
-
-def bytes_to_ipv4(b):
-    return '.'.join(str(x) for x in b)
-
-
-def bytes_to_ipv6(b):
-    parts = []
-    for i in range(0, 16, 2):
-        v = int.from_bytes(b[i:i+2], 'big')
-        parts.append(f'{v:04X}')
-    return ':'.join(parts)
-from ctypes import *
+import base64
 
 
 def read_binary_file(file_path):
@@ -35,120 +23,92 @@ def save_encrypted_base64(file_path, b64_data):
         f.write(b64_data)
 
 
-def parse_args():
-    p = argparse.ArgumentParser(description="Encrypt binary to new payload format")
+PLUGIN_DIR = Path(__file__).parent / 'encrypt_plugins'
+
+
+class PluginLoadError(Exception):
+    pass
+
+
+def load_plugins(plugin_dir=PLUGIN_DIR):
+    plugins = []
+    if not plugin_dir.exists():
+        return plugins
+    for p in plugin_dir.iterdir():
+        if p.name.startswith('_') or not p.suffix == '.py':
+            continue
+        name = p.stem
+        spec = importlib.util.spec_from_file_location(f"encrypt_plugins.{name}", str(p))
+        if spec is None:
+            continue
+        module = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(module)
+        except Exception as e:
+            print(f"Failed loading plugin {name}: {e}")
+            continue
+        # module must expose `name` and `process(data, args)` or a `Plugin` class
+        if hasattr(module, 'Plugin'):
+            try:
+                inst = module.Plugin()
+                plugins.append(inst)
+            except Exception as e:
+                print(f"Failed instantiating Plugin in {name}: {e}")
+        elif hasattr(module, 'name') and hasattr(module, 'process'):
+            plugins.append(module)
+    return plugins
+
+
+def build_base_parser(plugin_names):
+    p = argparse.ArgumentParser(description="Encrypt binary to new payload format (plugin-based)")
     p.add_argument("-i", "--input", default="calc.bin", help="input binary file (default calc.bin)")
     p.add_argument("-o", "--output", default="src/encrypt.bin", help="output base64 file (default src/encrypt.bin)")
-    p.add_argument("-m", "--method", default="chacha20-aes", choices=["rc4", "ipv4", "ipv6", "mac", "uuid"],
-                   help="encryption method (supported: rc4, ipv4, ipv6, mac, uuid)")
-    return p.parse_args()
+    default = plugin_names[0] if plugin_names else None
+    p.add_argument("-m", "--method", default=default, choices=plugin_names,
+                   help="encryption method / plugin to use")
+    return p
 
-
-
-def sgn_polymorph_encrypt(data, key, rounds):
-    buf = bytearray(data)
-    for r in range(rounds):
-        # 1. 异或
-        for i in range(len(buf)):
-            buf[i] ^= (key + i) & 0xFF
-            buf[i] ^= ((key >> ((i % 4) * 8)) & 0xFF) ^ ((r & 7) << 1)
-        # 2. 加/减
-        if r % 2 == 0:
-            for i in range(len(buf)):
-                buf[i] = (buf[i] + ((key & 0xFF) + i)) & 0xFF
-        else:
-            for i in range(len(buf)):
-                buf[i] = (buf[i] - ((key & 0xFF) - i)) & 0xFF
-        # 3. 位移
-        for i in range(len(buf)):
-            rot = ((key >> ((i % 4) * 8)) & 7)
-            buf[i] = ((buf[i] << rot) | (buf[i] >> (8 - rot))) & 0xFF
-        # 4. 反转
-        if r % 3 == 0:
-            buf.reverse()
-    return bytes(buf)
 
 def main():
+    plugins = load_plugins()
+    plugin_names = [getattr(p, 'name', None) for p in plugins]
+    plugin_names = [n for n in plugin_names if n]
 
-    args = parse_args()
-    input_file = args.input
-    output_file = args.output
-    data = read_binary_file(input_file)
+    parser = build_base_parser(plugin_names)
+    # parse initial to know selected plugin
+    args, _ = parser.parse_known_args()
+    if args.method is None:
+        parser.print_help()
+        raise SystemExit(1)
+    # find plugin object
+    selected = None
+    for p in plugins:
+        if getattr(p, 'name', None) == args.method:
+            selected = p
+            break
+    if selected is None:
+        raise SystemExit(f"Unsupported --method: {args.method}")
+    # let plugin add arguments if needed
+    if hasattr(selected, 'add_arguments') and callable(selected.add_arguments):
+        selected.add_arguments(parser)
+    # final parse
+    args = parser.parse_args()
+
+    data = read_binary_file(args.input)
     if data is None:
         return
 
-    if  args.method == "rc4":
-        from Crypto.Cipher import ARC4
-        key = os.urandom(32)  # 256-bit key
-        cipher = ARC4.new(key)
-        encrypted = cipher.encrypt(data)
-        sha256 = hashlib.sha256()
-        sha256.update(data)
-        hash1 = sha256.digest()
-        # 格式: [key(32)][hash(32)][encrypted...]
-        final = key + hash1 + encrypted
-    elif args.method == "ipv4":
-        addresses = []
-        for i in range(0, len(data), 4):
-            addr_bytes = data[i:i+4]
-            if len(addr_bytes) < 4:
-                addr_bytes += b'\x00' * (4 - len(addr_bytes))
-            addresses.append(bytes_to_ipv4(addr_bytes))
-        sha256 = hashlib.sha256()
-        sha256.update(data)
-        hash1 = sha256.digest()
-        len_bytes = len(data).to_bytes(4, 'little')
-        final = hash1 + len_bytes + ','.join(addresses).encode()
-    elif args.method == "ipv6":
-        addresses = []
-        for i in range(0, len(data), 16):
-            addr_bytes = data[i:i+16]
-            if len(addr_bytes) < 16:
-                addr_bytes += b'\x00' * (16 - len(addr_bytes))
-            addresses.append(bytes_to_ipv6(addr_bytes))
-        sha256 = hashlib.sha256()
-        sha256.update(data)
-        hash1 = sha256.digest()
-        len_bytes = len(data).to_bytes(4, 'little')
-        final = hash1 + len_bytes + ','.join(addresses).encode()
-
-    elif args.method == "mac":
-        def bytes_to_mac(b):
-            # 与 RtlEthernetAddressToStringA 完全一致，格式 01-23-45-67-89-AB
-            return '-'.join(f'{x:02X}' for x in b)
-        addresses = []
-        for i in range(0, len(data), 6):
-            mac_bytes = data[i:i+6]
-            if len(mac_bytes) < 6:
-                mac_bytes += b'\x00' * (6 - len(mac_bytes))
-            addresses.append(bytes_to_mac(mac_bytes))
-        sha256 = hashlib.sha256()
-        sha256.update(data)
-        hash1 = sha256.digest()
-        len_bytes = len(data).to_bytes(4, 'little')
-        final = hash1 + len_bytes + ','.join(addresses).encode()
-
-    elif args.method == "uuid":
-        # 补齐到16字节倍数
-        pad_len = (16 - (len(data) % 16)) % 16
-        if pad_len:
-            data += b'\x00' * pad_len
-        uuids = []
-        for i in range(0, len(data), 16):
-            block = data[i:i+16]
-            u = uuid.UUID(bytes=block)
-            uuids.append(str(u))
-        sha256 = hashlib.sha256()
-        sha256.update(data)
-        hash1 = sha256.digest()
-        len_bytes = len(data).to_bytes(4, 'little')
-        final = hash1 + len_bytes + ','.join(uuids).encode()
+    # call plugin to produce final bytes (pre-base64)
+    if hasattr(selected, 'process') and callable(selected.process):
+        final = selected.process(data, args)
+    elif hasattr(selected, 'process_data') and callable(selected.process_data):
+        final = selected.process_data(data, args)
     else:
-        raise SystemExit(f"Unsupported --method: {args.method}")
+        raise SystemExit(f"Plugin for {args.method} does not expose a process function")
 
     b64 = base64.b64encode(final)
-    save_encrypted_base64(output_file, b64)
-    print(f"Encrypted data (new format, method={args.method}) saved to {output_file}")
+    save_encrypted_base64(args.output, b64)
+    print(f"Encrypted data (new format, method={args.method}) saved to {args.output}")
 
 
 if __name__ == '__main__':
