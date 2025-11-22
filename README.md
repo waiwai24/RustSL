@@ -3,11 +3,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Language: Rust](https://img.shields.io/badge/Language-Rust-orange.svg)](https://www.rust-lang.org/)
 [![GUI: PyQt5](https://img.shields.io/badge/GUI-PyQt5-blue.svg)](https://www.riverbankcomputing.com/software/pyqt/)
-[![Based on](https://img.shields.io/badge/Based%20on-JoJoLoader-green.svg)](https://github.com/Pizz33/JoJoLoader)
 
 一款基于 Rust 开发的模块化免杀框架，支持 GUI 可视化与灵活的二次开发，内置多种 Shellcode 伪装与反沙箱策略。
-
-> 本项目基于 [JoJoLoader](https://github.com/Pizz33/JoJoLoader) 改进而来。
 
 ![alt text](static/front.png)
 
