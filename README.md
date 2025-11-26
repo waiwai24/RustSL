@@ -384,7 +384,7 @@ cargo build --release --no-default-features \
 
 ### 2025-11-26
 - **新增Windows 7兼容性支持**：
-  - 参照[felixmaker/thunk](https://github.com/felixmaker/thunk)写了src/thunk.rs用于Win7兼容性支持。如果要启用请按照教程配置环境，详细查看[Windows 7 兼容性配置](-windows-7-兼容性配置可选)。
+  - 参照[felixmaker/thunk](https://github.com/felixmaker/thunk)写了src/thunk.rs用于Win7兼容性支持。如果要启用请按照教程配置环境，详细查看[Windows 7 兼容性配置](#windows-7-兼容性配置可选)。
   - 添加GUI复选框控制Win7兼容模式（需要按照环境要求配置VC-LTL5和YY-Thunks）
 - **重构构建系统**：
   - 将 `target.rs` 生成逻辑从GUI移至 `build.rs`，通过feature环境变量控制
