@@ -33,3 +33,9 @@ pub use crate::decrypt::rc4::decrypt;
 mod aes;
 #[cfg(feature = "decrypt_aes")]
 pub use crate::decrypt::aes::decrypt;
+
+// XChaCha20 解密
+#[cfg(feature = "decrypt_xchacha20")]
+mod xchacha20;
+#[cfg(feature = "decrypt_xchacha20")]
+pub use crate::decrypt::xchacha20::decrypt;
