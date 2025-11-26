@@ -45,15 +45,25 @@
 
 ### 💾 内存分配
 - **VirtualAlloc** - 使用系统 API 分配 RWX 内存
+- **GlobalAlloc** - 使用全局内存分配函数
+- **LocalAlloc** - 使用本地内存分配函数
+- **HeapAlloc** - 使用堆内存分配函数
+- **MemoryMappedFile** - 使用内存映射文件分配内存
 - 可拓展...
 
 ### 🛡️ VM/沙箱检测
 - **Tick 检测** - 时间差异分析
 - **鼠标轨迹检测** - 通过多点轨迹特征判断真实鼠标活动
+- **桌面文件检测** - 检查桌面文件数量以识别虚拟环境
+- **C盘容量检测** - 检查 C 盘剩余容量以识别虚拟环境
 - 可拓展...
 
 ### 🚀 运行模式
 - **CreateThread 直接执行** - 传统线程创建方式
+- **GDI 家族变种注入** - 利用 GDI 函数进行注入
+- **EnumUILanguagesW 回调执行** - 通过回调函数执行 Shellcode
+- **Early Bird APC 注入** - 利用 APC 机制进行注入
+- **CreateRemoteThread 远程注入** - 通过远程线程创建执行 Shellcode
 - 可拓展...
 
 ## 📦 项目结构
@@ -63,6 +73,7 @@ RustSL/
 ├── gui/                     # PyQt5 图形界面与组件
 ├── src/                     # Rust 核心代码
 │   ├── main.rs              # Rust 主程序入口
+|   ├── thunk.rs             # Windows 7 兼容性支持模块
 │   ├── alloc_mem/           # 内存分配相关模块
 │   ├── decrypt/             # Shellcode 解密模块
 │   ├── exec/                # Shellcode 执行模块
@@ -171,11 +182,8 @@ python main.py
 ```
 
 #### 2. 选择配置
-在 GUI 界面中选择：
-- **加密方式**：RC4 / IPv4 / IPv6 / MAC / UUID / AES
-- **运行模式**：CreateThread
-- **内存分配**：VirtualAlloc
-- **VM 检测**：勾选需要的检测项
+
+在 GUI 界面中选择需要的配置选项
 
 #### 3. 生成加载器
 点击 **"一键生成"** 按钮，程序将自动完成：
@@ -225,30 +233,16 @@ YY-Thunks 提供了对较新 Windows API 的向下兼容 thunk 实现。
 ```json
 {
   "encryption": [
-    { "id": "ipv4", "label": "ipv4", "encrypt_arg": "ipv4", "feature": "decrypt_ipv4" },
-    { "id": "ipv6", "label": "ipv6", "encrypt_arg": "ipv6", "feature": "decrypt_ipv6" },
-    { "id": "mac", "label": "mac", "encrypt_arg": "mac", "feature": "decrypt_mac" },
-    { "id": "uuid", "label": "uuid", "encrypt_arg": "uuid", "feature": "decrypt_uuid" },
-    { "id": "rc4", "label": "rc4", "encrypt_arg": "rc4", "feature": "decrypt_rc4" },
-    { "id": "aes", "label": "aes", "encrypt_arg": "aes", "feature": "decrypt_aes" }
+    { "id": "ipv4", "label": "ipv4", "encrypt_arg": "ipv4", "feature": "decrypt_ipv4" }
   ],
   "alloc_mem_modes": [
-    { "id": "alloc_mem_va", "label": "VirtualAlloc", "feature": "alloc_mem_va" },
-    { "id": "alloc_mem_global", "label": "GlobalAlloc", "feature": "alloc_mem_global" },
-    { "id": "alloc_mem_local", "label": "LocalAlloc", "feature": "alloc_mem_local" }
+    { "id": "alloc_mem_va", "label": "VirtualAlloc", "feature": "alloc_mem_va" }
   ],
   "run_modes": [
-    { "id": "create_thread", "label": "CreateThread 直接执行 (create_thread)", "feature": "run_create_thread", "pattern": 1 },
-    { "id": "gdi_families", "label": "GDI 家族变种注入 (gdi_families)", "feature": "run_gdi_families", "pattern": 1 },
-    { "id": "enum_ui", "label": "EnumUILanguagesW 回调执行 (enum_ui)", "feature": "run_enum_ui", "pattern": 1 },
-    { "id": "early_bird_apc", "label": "Early Bird APC 注入 (early_bird_apc)", "feature": "run_early_bird_apc", "pattern": 2 },
-    { "id": "create_remote_thread", "label": "CreateRemoteThread 远程注入 (create_remote_thread)", "feature": "run_create_remote_thread", "pattern": 3 }
+    { "id": "create_thread", "label": "CreateThread 直接执行 (create_thread)", "feature": "run_create_thread", "pattern": 1 }
   ],
   "vm_checks": [
-    { "id": "tick", "label": "Tick检测", "feature": "vm_check_tick" },
-    { "id": "mouse", "label": "鼠标轨迹", "feature": "vm_check_mouse" },
-    { "id": "desktop_files", "label": "桌面文件", "feature": "vm_check_desktop_files" },
-    { "id": "c_drive", "label": "C盘容量", "feature": "vm_check_c_drive" }
+    { "id": "tick", "label": "Tick检测", "feature": "vm_check_tick" }
   ],
   "defaults": {
     "encryption": "ipv4",
@@ -260,12 +254,10 @@ YY-Thunks 提供了对较新 Windows API 的向下兼容 thunk 实现。
 
 ## 🔧 命令行加密
 
-## 🔧 命令行加密
-
 也可以单独使用加密脚本：
 
 ```bash
-python encrypt.py -i input.bin -o output.bin -m rc4
+python encrypt.py -i inpuy/input.bin -o src/encrypt.bin -m rc4
 ```
 
 参数：
@@ -273,27 +265,18 @@ python encrypt.py -i input.bin -o output.bin -m rc4
 - `-o, --output` - 输出的加密文件
 - `-m, --method` - 加密方式
 
-插件化说明：
+### 插件化说明：
 
 - `encrypt.py` 已重构为插件化：所有加密/编码方式都以插件形式放在 `encrypt_lib/` 目录下。
 - 每个插件应导出 `name` 字符串和 `process(data, args)` 函数，`encrypt.py` 会自动扫描并加载它们。
 
-列出当前可用插件：
-```bash
-python -c "import encrypt; plugins=encrypt.load_plugins(); print([getattr(p,'name',None) for p in plugins])"
-```
-
-使用某个插件进行加密：
-```bash
-python encrypt.py -i input.bin -o output.b64 -m aes-gcm
-```
 
 若想添加新插件：
 1. 在 `encrypt_lib/` 中新增 `.py` 文件。
 2. 在文件中导出 `name` 和 `process(data, args)`，也可以提供 `add_arguments(parser)` 来扩展 CLI 参数。
 3. 重新运行 `encrypt.py`，新插件会自动被发现。
 
-## 📝 编译特性
+## 📝 命令行编译
 
 使用 Cargo features 控制编译功能：
 
