@@ -5,6 +5,14 @@ name = "rsl"
 version = "1.1.1"
 edition = "2021"
 
+[[bin]]
+name = "gui"
+path = "src/bin/gui.rs"
+
+[[bin]]
+name = "rsl"
+path = "src/main.rs"
+
 [dependencies]
 tempfile = "3.10.1"
 base64 = "0.21.5"
@@ -20,6 +28,7 @@ aes = "0.8"
 chacha20 = "0.8"
 generic-array = "0.14"
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 wmi = "0.9"
 aes-gcm = "0.10"
 rc4 = "0.1"
@@ -30,6 +39,12 @@ ascon-aead = "0.4.2"
 sm4 = "0.5"
 ctr = "0.9"
 chacha20poly1305 = "0.10"
+egui = "0.24.1"
+eframe = "0.24.1"
+rfd = "0.14"
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.11"
 
 [build-dependencies]
 embed-resource = "1.8.0"
