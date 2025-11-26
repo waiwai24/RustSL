@@ -381,4 +381,4 @@ cargo build --release --no-default-features \
 - **新增XchaCha20加密方式**：
   - 在 `encrypt_lib/xchacha20.py` 中实现XChaCha20加密插件。
   - 在 `src/decrypt/xchacha20.rs` 中实现对应的解密模块。
-- **将base64编码逻辑由encrypt移动到各加密插件中**
+- **将加解密与编解码解耦，可以组合出更多可能性**
