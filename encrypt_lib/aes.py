@@ -3,7 +3,6 @@ description = 'AES encrypt with random 32-byte key and 16-byte IV, output [key(3
 
 import os
 import hashlib
-import base64
 
 def sha256_bytes(b):
     sha = hashlib.sha256()
@@ -26,4 +25,4 @@ def process(data, args):
     encrypted = cipher.encrypt(padded_data)
     hash1 = sha256_bytes(data)
     final = key + iv + hash1 + encrypted
-    return base64.b64encode(final)
+    return final

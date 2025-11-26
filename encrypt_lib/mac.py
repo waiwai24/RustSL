@@ -2,7 +2,6 @@ name = 'mac'
 description = 'Encode binary as MAC addresses (comma separated) with leading sha256 and length'
 
 import hashlib
-import base64
 
 def sha256_bytes(b):
 	sha = hashlib.sha256()
@@ -22,4 +21,4 @@ def process(data, args):
     hash1 = sha256_bytes(data)
     len_bytes = len(data).to_bytes(4, 'little')
     final = hash1 + len_bytes + ','.join(addresses).encode()
-    return base64.b64encode(final)
+    return final

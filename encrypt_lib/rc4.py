@@ -21,4 +21,4 @@ def process(data, args):
     encrypted = cipher.encrypt(data)
     hash1 = sha256_bytes(data)
     final = key + hash1 + encrypted
-    return base64.b64encode(final)
+    return final

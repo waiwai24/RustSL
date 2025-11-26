@@ -62,10 +62,12 @@ def load_plugins(plugin_dir=PLUGIN_DIR):
 def build_base_parser(plugin_names):
     p = argparse.ArgumentParser(description="Encrypt binary to new payload format (plugin-based)")
     p.add_argument("-i", "--input", default="calc.bin", help="input binary file (default calc.bin)")
-    p.add_argument("-o", "--output", default="src/encrypt.bin", help="output base64 file (default src/encrypt.bin)")
+    p.add_argument("-o", "--output", default="src/encrypt.bin", help="output encoded file (default src/encrypt.bin)")
     default = plugin_names[0] if plugin_names else None
     p.add_argument("-m", "--method", default=default, choices=plugin_names,
                    help="encryption method / plugin to use")
+    p.add_argument("-e", "--encode", default="base64", choices=["base64", "base32", "none"],
+                   help="encoding method for output (default base64)")
     return p
 
 
@@ -98,7 +100,7 @@ def main():
     if data is None:
         return
 
-    # call plugin to produce final bytes (pre-base64)
+    # call plugin to produce final bytes (pre-encode)
     if hasattr(selected, 'process') and callable(selected.process):
         final = selected.process(data, args)
     elif hasattr(selected, 'process_data') and callable(selected.process_data):
@@ -106,8 +108,16 @@ def main():
     else:
         raise SystemExit(f"Plugin for {args.method} does not expose a process function")
 
+    # Apply encoding based on --encode option
+    if args.encode == "base64":
+        final = base64.b64encode(final)
+    elif args.encode == "base32":
+        final = base64.b32encode(final)
+    elif args.encode == "none":
+        pass  # final remains as bytes
+
     save(args.output, final)
-    print(f"Encrypted data (new format, method={args.method}) saved to {args.output}")
+    print(f"Encrypted data (method={args.method}, encode={args.encode}) saved to {args.output}")
 
 
 if __name__ == '__main__':

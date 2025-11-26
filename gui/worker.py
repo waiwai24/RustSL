@@ -63,7 +63,8 @@ class WorkerThread(QThread):
             sys.executable, 'encrypt.py',
             '-i', self.params['input_bin'],
             '-o', 'src/encrypt.bin',
-            '-m', enc_method_arg
+            '-m', enc_method_arg,
+            '-e', self.params.get('encode_method', 'base64')
         ]
         
         result = subprocess.run(enc_cmd, capture_output=True, text=True, check=True)
@@ -145,6 +146,15 @@ class WorkerThread(QThread):
             'decrypt_chacha20_aes'
         )
         features.append(enc_feature)
+        
+        # 编码方式feature (解码对应)
+        encode_method = self.params.get('encode_method', 'base64')
+        if encode_method == 'base64':
+            features.append('base64_decode')
+        elif encode_method == 'base32':
+            features.append('base32_decode')
+        elif encode_method == 'none':
+            features.append('none_decode')
         
         # 运行模式feature
         run_map = get_run_mode_map()

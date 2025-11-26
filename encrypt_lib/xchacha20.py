@@ -3,7 +3,6 @@ description = 'XChaCha20-Poly1305 AEAD with 24-byte nonce; payload: [Key(32)][No
 
 import os
 import hashlib
-import base64
 
 def process(data, args):
     try:
@@ -16,4 +15,4 @@ def process(data, args):
     cipher = ChaCha20_Poly1305.new(key=key, nonce=nonce)
     ciphertext, tag = cipher.encrypt_and_digest(data)
     final = key + nonce + tag + ciphertext
-    return base64.b64encode(final)
+    return final

@@ -9,7 +9,6 @@ def sha256_bytes(b):
 	sha.update(b)
 	return sha.digest()
 
-
 def bytes_to_ipv4(b):
 	return '.'.join(str(x) for x in b)
 
@@ -23,4 +22,4 @@ def process(data, args):
     hash1 = sha256_bytes(data)
     len_bytes = len(data).to_bytes(4, 'little')
     final = hash1 + len_bytes + ','.join(addresses).encode()
-    return base64.b64encode(final)
+    return final
