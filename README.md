@@ -257,19 +257,19 @@ YY-Thunks 提供了对较新 Windows API 的向下兼容 thunk 实现。
 也可以单独使用加密脚本：
 
 ```bash
-python encrypt.py -i inpuy/input.bin -o src/encrypt.bin -m rc4
+python encrypt.py -i input/calc.bin -o src/encrypt.bin -m rc4 -e base64
 ```
 
 参数：
 - `-i, --input` - 输入的二进制文件
 - `-o, --output` - 输出的加密文件
 - `-m, --method` - 加密方式
+- `-e, --encode` - 编码方式
 
 ### 插件化说明：
 
 - `encrypt.py` 已重构为插件化：所有加密/编码方式都以插件形式放在 `encrypt_lib/` 目录下。
 - 每个插件应导出 `name` 字符串和 `process(data, args)` 函数，`encrypt.py` 会自动扫描并加载它们。
-
 
 若想添加新插件：
 1. 在 `encrypt_lib/` 中新增 `.py` 文件。
@@ -282,8 +282,7 @@ python encrypt.py -i inpuy/input.bin -o src/encrypt.bin -m rc4
 
 ```bash
 # 示例：启用 IPv4 解密 + CreateThread 运行 + Tick 检测 + 鼠标检测 + 桌面文件检测
-cargo build --release --no-default-features \
-  --features=decrypt_ipv4,run_create_thread,vm_check_tick,vm_check_mouse,vm_check_desktop_files
+set "RSL_ICON_PATH=icons\avp_0000.ico" && cargo build --release --no-default-features --features=decrypt_ipv4,base64_decode,run_create_thread,alloc_mem_va,vm_check_tick,vm_check_mouse,vm_check_desktop_files
 ```
 
 ## 🛠️ 二次开发
